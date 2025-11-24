@@ -55,10 +55,10 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           
-          # Pasta local que acabamos de montar
+          # Pasta local com os arquivos prontos para envio
           local-dir: ./dist/
           
-          # Pasta na Hostinger (Geralmente é public_html)
+          # Pasta na Hostinger onde os arquivos serão enviados
           server-dir: ./test/
           
           # Arquivos para ignorar (segurança)
@@ -66,3 +66,5 @@ jobs:
             **/.git*
             **/.env*
             **/node_modules/**
+            uploads/**
+            api_projects.php
