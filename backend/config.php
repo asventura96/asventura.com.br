@@ -1,78 +1,92 @@
 <?php
 
-// Configuração do Banco de Dados (SQLite para simplicidade no desenvolvimento)
-// Em produção na Hostinger, você usaria MySQL/MariaDB
-define('DB_PATH', __DIR__ . '/database.sqlite');
+// --- 1. DADOS DO BANCO DE DADOS ---
+define('DB_HOST', getenv('DB_HOST'));
+define('DB_NAME', getenv('DB_NAME'));
+define('DB_USER', getenv('DB_USER'));
+define('DB_PASS', getenv('DB_PASS'));
 
-// Configuração de Segurança
-define('ADMIN_USER', 'admin');
-define('ADMIN_PASS', 'senha_segura_aqui'); // Mudar em produção!
+// --- 3. SMTP (Para enviar e-mail) ---
+define('SMTP_HOST', getenv('SMTP_HOST'));
+define('SMTP_PORT', getenv('SMTP_PORT'));
+define('SMTP_USER', getenv('SMTP_USER'));
+define('SMTP_PASS', getenv('SMTP_PASS'));
+define('SMTP_FROM_EMAIL', getenv('SMTP_FROM_EMAIL'));
+define('SMTP_FROM_NAME', getenv('SMTP_FROM_NAME'));
 
-// Configuração de SMTP (para o formulário de contato)
-define('SMTP_HOST', 'smtp.hostinger.com');
-define('SMTP_PORT', 587);
-define('SMTP_USER', 'seu_email@asventura.com.br');
-define('SMTP_PASS', 'sua_senha_smtp');
-define('SMTP_FROM_EMAIL', 'contato@asventura.com.br');
-define('SMTP_FROM_NAME', 'André Ventura - Contato');
+// --- 4. CORS (Para o Next.js não ser bloqueado) ---
+define('CORS_ORIGIN', '*');
 
-// Configuração de CORS para a API (permitir acesso do Next.js)
-define('CORS_ORIGIN', 'http://localhost:3000'); // Mudar para o domínio do Next.js em produção
-
-// Função para inicializar o banco de dados
+// --- 5. INICIALIZAÇÃO DO BANCO ---
 function init_db() {
     try {
-        $pdo = new PDO('sqlite:' . DB_PATH);
+        // Conexão MySQL
+        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+        $pdo = new PDO($dsn, DB_USER, DB_PASS);
+        
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
+        // Criação de Tabelas (Sintaxe corrigida para MySQL)
+        // MySQL usa AUTO_INCREMENT, SQLite usa AUTOINCREMENT. Se não mudar, dá erro.
+        
         // Tabela de Projetos
         $pdo->exec("CREATE TABLE IF NOT EXISTS projects (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
             description TEXT,
-            image_url TEXT,
-            link TEXT,
+            image_url VARCHAR(255),
+            link VARCHAR(255),
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
 
-        // Tabela de Envios de Contato
+        // Tabela de Contatos
         $pdo->exec("CREATE TABLE IF NOT EXISTS contacts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT NOT NULL,
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL,
             message TEXT NOT NULL,
-            status TEXT DEFAULT 'Novo', -- Novo, Em Progresso, Respondido
+            status VARCHAR(50) DEFAULT 'Novo',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
 
         return $pdo;
+
     } catch (PDOException $e) {
-        die("Erro ao conectar/inicializar o banco de dados: " . $e->getMessage());
+        // Retorna erro JSON se falhar, pra você ver no navegador
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode(["erro" => "Falha no Banco: " . $e->getMessage()]);
+        exit;
     }
 }
 
-// Inicializa o banco de dados
+// Inicializa a conexão
 $pdo = init_db();
 
-// Função para enviar cabeçalhos CORS
+// --- 6. FUNÇÕES AUXILIARES ---
+
 function send_cors_headers() {
     header("Access-Control-Allow-Origin: " . CORS_ORIGIN);
-    header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+    
+    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+        http_response_code(200);
+        exit;
+    }
 }
 
-// Função para autenticação básica
 function authenticate() {
     if (!isset($_SERVER['PHP_AUTH_USER']) || !isset($_SERVER['PHP_AUTH_PW']) ||
         $_SERVER['PHP_AUTH_USER'] !== ADMIN_USER || $_SERVER['PHP_AUTH_PW'] !== ADMIN_PASS) {
         header('WWW-Authenticate: Basic realm="Painel Administrativo"');
         header('HTTP/1.0 401 Unauthorized');
-        echo 'Acesso não autorizado.';
+        echo json_encode(["erro" => "Acesso negado"]);
         exit;
     }
 }
 
-// Função para enviar resposta JSON
 function json_response($data, $status = 200) {
     http_response_code($status);
     header('Content-Type: application/json');
@@ -80,8 +94,8 @@ function json_response($data, $status = 200) {
     exit;
 }
 
-// Incluir o autoload do Composer para usar o PHPMailer
-require __DIR__ . '/vendor/autoload.php';
-// require 'vendor/autoload.php';
-
+// Tenta carregar o Composer (se existir)
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require __DIR__ . '/vendor/autoload.php';
+}
 ?>
