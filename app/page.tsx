@@ -1,27 +1,10 @@
 import Image from 'next/image';
 import ProjectSlider from '../components/ProjectSlider';
-
-interface Project {
-  id: number;
-  title: string;
-  description: string;
-  image_url: string;
-  link: string;
-}
-
-async function getProjects() {
-  const apiUrl = 'http://localhost:8000/api_projects.php';
-  try {
-    const res = await fetch(apiUrl, { cache: 'no-store', next: { revalidate: 0 } });
-    if (!res.ok) throw new Error('Falha na API');
-    return res.json();
-  } catch {
-    // CORREÇÃO 1: Removi o "(error)" daqui. Se não vai usar a variável, não declare.
-    return [];
-  }
-}
+// IMPORTAÇÃO NOVA: Trazendo a função do arquivo que acabamos de criar
+import { getProjects, Project } from '../utils/api';
 
 export default async function Home() {
+  // AQUI A MÁGICA: O código fica limpo, chamando apenas a função
   const projects: Project[] = await getProjects();
 
   return (
@@ -55,14 +38,13 @@ export default async function Home() {
         {/* HERO SECTION */}
         <section className="relative w-full h-[600px] flex items-center justify-start overflow-hidden">
           <div className="absolute inset-0 z-0 bg-brand-dark">
-            {/* CORREÇÃO 2: Troquei <img> por <Image /> com fill e priority */}
             <Image 
               src="/images/landing.jpg" 
               alt="Background Tech" 
               fill
-              priority // Carrega rápido pois é a primeira coisa que aparece
+              priority
               className="object-cover opacity-20 mix-blend-overlay"
-              unoptimized // Necessário para exportação estática
+              unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-r from-brand-dark via-brand-dark/80 to-transparent"></div>
           </div>
@@ -101,7 +83,7 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* CONTATO */}
+        {/* CONTATO - AINDA ESTÁTICO (Vamos ativar depois) */}
         <section id="contact" className="py-24 bg-[#012233] border-t border-white/5">
           <div className="max-w-3xl mx-auto px-4">
             <h2 className="text-4xl font-bold text-center mb-10 text-white uppercase font-rajdhani">
@@ -122,8 +104,8 @@ export default async function Home() {
                 <label className="block text-sm font-bold text-brand-blue mb-2 uppercase font-rajdhani">Mensagem</label>
                 <textarea rows={4} className="w-full bg-[#012233] border border-white/10 text-white rounded p-4 focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all"></textarea>
               </div>
-              <button type="submit" className="w-full py-4 px-6 bg-brand-green hover:bg-white hover:text-brand-dark text-brand-dark font-bold uppercase tracking-widest rounded transition-all shadow-lg hover:shadow-brand-green/20 font-rajdhani">
-                Enviar Mensagem
+              <button type="button" className="w-full py-4 px-6 bg-brand-green hover:bg-white hover:text-brand-dark text-brand-dark font-bold uppercase tracking-widest rounded transition-all shadow-lg hover:shadow-brand-green/20 font-rajdhani">
+                Enviar Mensagem (Em breve)
               </button>
             </form>
           </div>
