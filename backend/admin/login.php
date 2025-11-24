@@ -2,60 +2,81 @@
 session_start();
 require_once __DIR__ . '/../config.php';
 
+// Se já estiver logado, joga pro painel
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: index.php');
     exit;
 }
 
 $error = '';
+
+// Se enviou o formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
+    // Pega os dados do form
+    $email = $_POST['email'] ?? ''; // Atenção: O name no HTML abaixo deve ser 'email'
     $password = $_POST['password'] ?? '';
 
-    if ($username === ADMIN_USER && $password === ADMIN_PASS) {
-        $_SESSION['admin_logged_in'] = true;
-        header('Location: index.php');
-        exit;
-    } else {
-        $error = 'Usuário ou senha inválidos.';
+    try {
+        // BUSCA NO BANCO DE DADOS (Não usa mais ADMIN_USER)
+        $stmt = $pdo->prepare("SELECT id, email, password FROM admins WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Verifica se achou o usuário E se a senha bate
+        if ($user && password_verify($password, $user['password'])) {
+            // SUCESSO!
+            $_SESSION['admin_logged_in'] = true;
+            $_SESSION['admin_id'] = $user['id'];
+            $_SESSION['admin_email'] = $user['email'];
+            
+            header('Location: index.php');
+            exit;
+        } else {
+            $error = 'E-mail ou senha incorretos.';
+        }
+    } catch (PDOException $e) {
+        $error = "Erro ao conectar no banco.";
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Painel Admin</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); width: 300px; }
-        h2 { text-align: center; margin-bottom: 20px; color: #333; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
-        .error { color: red; text-align: center; margin-bottom: 15px; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="login-container">
-        <h2>Painel Administrativo</h2>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+
+    <div class="bg-white p-8 rounded shadow-md w-96">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Painel Admin</h2>
+        
         <?php if ($error): ?>
-            <p class="error"><?php echo $error; ?></p>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+                <?php echo $error; ?>
+            </div>
         <?php endif; ?>
+
         <form method="POST">
-            <div class="form-group">
-                <label for="username">Usuário:</label>
-                <input type="text" id="username" name="username" required>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">E-mail</label>
+                <input type="email" name="email" required 
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
-            <div class="form-group">
-                <label for="password">Senha:</label>
-                <input type="password" id="password" name="password" required>
+            
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
+                <input type="password" name="password" required 
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
-            <button type="submit">Entrar</button>
+            
+            <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition">
+                Entrar
+            </button>
         </form>
     </div>
+
 </body>
 </html>
