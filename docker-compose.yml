@@ -1,0 +1,31 @@
+services:
+  # --- BACKEND (PHP) ---
+  backend:
+    build: ./backend
+    container_name: app-backend
+    restart: always
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www/html
+    networks:
+      - rede-interna
+    env_file:
+      - .env
+
+  # --- FRONTEND (NEXT.JS) ---
+  frontend:
+    image: node:18-alpine
+    container_name: app-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3000:3000"
+    command: npm run dev
+    networks:
+      - rede-interna
+
+networks:
+  rede-interna:
+    driver: bridge
