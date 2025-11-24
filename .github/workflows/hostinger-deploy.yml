@@ -40,10 +40,9 @@ jobs:
           cp backend/admin/*.php dist/admin/
           mkdir -p dist/uploads
 
-      # 6. UPLOAD VIA LFTP (MÉTODO ROBUSTO)
-      # Instala o lftp e manda os arquivos sem choro
+      # 6. UPLOAD VIA LFTP
       - name: 🚀 Upload via LFTP
         run: |
           sudo apt-get update
           sudo apt-get install -y lftp
-          lftp -e "set ssl:verify-certificate no; open ${{ secrets.FTP_SERVER }}; user ${{ secrets.FTP_USERNAME }} ${{ secrets.FTP_PASSWORD }}; mirror -R --verbose --parallel=2 --no-delete ./dist ./test; bye"
+          lftp -e "set ssl:verify-certificate no; open ${{ secrets.FTP_SERVER }}; user ${{ secrets.FTP_USERNAME }} ${{ secrets.FTP_PASSWORD }}; mirror -R --verbose --parallel=2 ./dist ./test; bye"
