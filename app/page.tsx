@@ -1,11 +1,10 @@
 import Image from 'next/image';
-import ProjectSlider from '../components/ProjectSlider';
-// IMPORTAÇÃO NOVA: Trazendo a função do arquivo que acabamos de criar
-import { getProjects, Project } from '../utils/api';
+// Importamos o novo componente inteligente
+import ProjectsArea from '../components/ProjectsArea';
 
-export default async function Home() {
-  // AQUI A MÁGICA: O código fica limpo, chamando apenas a função
-  const projects: Project[] = await getProjects();
+export default function Home() {
+  // Removemos toda aquela lógica de getProjects daqui. 
+  // A página agora é estática e leve.
 
   return (
     <div className="min-h-screen bg-brand-dark text-white selection:bg-brand-green selection:text-brand-dark">
@@ -63,7 +62,7 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* PROJETOS */}
+        {/* PROJETOS (AGORA DINÂMICO NO CLIENTE) */}
         <section id="projects" className="py-24 bg-brand-dark relative border-t border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-8">
             <div className="flex items-center gap-4 mb-16">
@@ -73,17 +72,13 @@ export default async function Home() {
               <div className="h-px w-full bg-gradient-to-r from-brand-green to-transparent opacity-50 mt-1"></div>
             </div>
             
-            {projects.length === 0 ? (
-              <p className="text-center text-brand-blue/50 py-10 border border-dashed border-brand-blue/20 rounded font-roboto">
-                Nenhum projeto cadastrado no momento.
-              </p>
-            ) : (
-              <ProjectSlider data={projects} />
-            )}
+            {/* AQUI ENTRA O COMPONENTE QUE BUSCA OS DADOS */}
+            <ProjectsArea />
+            
           </div>
         </section>
 
-        {/* CONTATO - AINDA ESTÁTICO (Vamos ativar depois) */}
+        {/* CONTATO */}
         <section id="contact" className="py-24 bg-[#012233] border-t border-white/5">
           <div className="max-w-3xl mx-auto px-4">
             <h2 className="text-4xl font-bold text-center mb-10 text-white uppercase font-rajdhani">
