@@ -10,23 +10,28 @@ jobs:
     name: 🎉 Deploy
     runs-on: ubuntu-latest
     steps:
+      # 1. PEGAR O CÓDIGO
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
 
+      # 2. INSTALAR NODE
       - name: 🟢 Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
+      # 3. INSTALAR DEPENDÊNCIAS
       - name: 📦 Install Dependencies
         run: npm install
 
+      # 4. CONSTRUIR O SITE
       - name: 🏗️ Build Site
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
-      - name: 🗂️ Prepare Files
+      # 5. PREPARAR PASTA PARA ENVIO
+      - name: 🗂️ Prepare Dist Folder
         run: |
           mkdir dist
           cp -r out/* dist/
@@ -35,18 +40,10 @@ jobs:
           cp backend/admin/*.php dist/admin/
           mkdir -p dist/uploads
 
-      - name: 🚀 Upload to Hostinger
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
-          server-dir: ./test/
-          exclude: |
-            **/.git*
-            **/.github*
-            **/.env*
-            **/node_modules/**
-            uploads/**
-            api_projects.php
+      # 6. UPLOAD VIA LFTP (MÉTODO ROBUSTO)
+      # Instala o lftp e manda os arquivos sem choro
+      - name: 🚀 Upload via LFTP
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+          lftp -e "set ssl:verify-certificate no; open ${{ secrets.FTP_SERVER }}; user ${{ secrets.FTP_USERNAME }} ${{ secrets.FTP_PASSWORD }}; mirror -R --verbose --parallel=2 --no-delete ./dist ./test; bye"
