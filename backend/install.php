@@ -1,7 +1,9 @@
 <?php
-// backend/install.php
+// Ativa exibição de erros para debug
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-// Carrega as configurações (que já leem o .env)
 require 'config.php';
 
 echo "<h1>Iniciando Instalação do Banco de Dados...</h1>";
@@ -41,29 +43,40 @@ try {
     $pdo->exec($sqlContacts);
     echo "✅ Tabela 'contacts' verificada.<br>";
 
-    // --- 3.1. CRIAR TABELA DE CAMPOS DO FORMULÁRIO ---
-    // Aqui definimos: "Nome", "Email", "Telefone", "Assunto", etc.
+    // --- 4. CRIAR TABELA DE FORMULÁRIOS (PAI) ---
+    // Esta tabela PRECISAVA vir antes das outras
+    $sqlForms = "CREATE TABLE IF NOT EXISTS forms (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
+        recipient_email VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )";
+    $pdo->exec($sqlForms);
+    echo "✅ Tabela 'forms' verificada.<br>";
+
+    // --- 5. CRIAR TABELA DE CAMPOS DO FORMULÁRIO ---
+    // Corrigido: Removi as aspas duplas dos comentários para não quebrar o PHP
     $sqlFields = "CREATE TABLE IF NOT EXISTS form_fields (
         id INT AUTO_INCREMENT PRIMARY KEY,
         form_id INT NOT NULL,
-        label VARCHAR(255) NOT NULL,      -- Ex: "Seu Telefone"
-        name VARCHAR(255) NOT NULL,       -- Ex: "phone" (uso interno/técnico)
-        type VARCHAR(50) NOT NULL,        -- Ex: text, email, textarea, select
-        options TEXT NULL,                -- Ex: "Opção A, Opção B" (só para select)
-        is_required BOOLEAN DEFAULT 0,    -- 1 = Obrigatório
-        sort_order INT DEFAULT 0,         -- Para ordenar os campos
+        label VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        options TEXT NULL,
+        is_required BOOLEAN DEFAULT 0,
+        sort_order INT DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (form_id) REFERENCES forms(id) ON DELETE CASCADE
     )";
     $pdo->exec($sqlFields);
     echo "✅ Tabela 'form_fields' verificada.<br>";
 
-    // --- 3.2. CRIAR TABELA DE ENVIOS (RESPOSTAS) ---
-    // Aqui ficam os dados que os clientes preencherem
+    // --- 6. CRIAR TABELA DE ENVIOS (RESPOSTAS) ---
     $sqlSubmissions = "CREATE TABLE IF NOT EXISTS form_submissions (
         id INT AUTO_INCREMENT PRIMARY KEY,
         form_id INT NOT NULL,
-        data JSON NOT NULL, -- Salva qualquer campo enviado em formato JSON
+        data JSON NOT NULL,
         email_status VARCHAR(50) DEFAULT 'Pendente',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (form_id) REFERENCES forms(id) ON DELETE CASCADE
@@ -71,28 +84,25 @@ try {
     $pdo->exec($sqlSubmissions);
     echo "✅ Tabela 'form_submissions' verificada.<br>";
 
-    // --- 4. CRIAR O ADMIN INICIAL (Baseado no .env) ---
-    // Pega as variáveis do ambiente (ou usa um padrão se esquecerem de por no .env)
+    // --- 7. CRIAR O ADMIN INICIAL ---
     $email = getenv('DEFAULT_ADMIN_EMAIL') ?: 'admin@admin.com';
     $pass  = getenv('DEFAULT_ADMIN_PASS')  ?: 'admin';
 
-    // Verifica se já existe algum admin para não duplicar
     $check = $pdo->prepare("SELECT id FROM admins WHERE email = ?");
     $check->execute([$email]);
 
     if ($check->rowCount() == 0) {
-        // Criptografa a senha (NUNCA salve senha pura)
         $hash = password_hash($pass, PASSWORD_DEFAULT);
-        
         $insert = $pdo->prepare("INSERT INTO admins (email, password) VALUES (?, ?)");
         $insert->execute([$email, $hash]);
         
         echo "<hr>✅ <strong>SUCESSO:</strong> Usuário Admin criado!<br>";
         echo "Email: $email<br>";
-        echo "Senha: (A que está no seu arquivo .env)<br>";
     } else {
-        echo "<hr>ℹ️ O usuário admin '$email' já existe. Nenhuma alteração feita.<br>";
+        echo "<hr>ℹ️ O usuário admin já existe.<br>";
     }
+
+    echo "<h2>🏁 Instalação Concluída!</h2>";
 
 } catch (PDOException $e) {
     echo "<hr>❌ <strong>ERRO CRÍTICO:</strong> " . $e->getMessage();
