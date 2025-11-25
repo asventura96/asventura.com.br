@@ -1,4 +1,6 @@
 <?php
+// backend/install.php
+
 // Ativa exibição de erros para debug
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -44,7 +46,6 @@ try {
     echo "✅ Tabela 'contacts' verificada.<br>";
 
     // --- 4. CRIAR TABELA DE FORMULÁRIOS (PAI) ---
-    // Esta tabela PRECISAVA vir antes das outras
     $sqlForms = "CREATE TABLE IF NOT EXISTS forms (
         id INT AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
@@ -56,7 +57,6 @@ try {
     echo "✅ Tabela 'forms' verificada.<br>";
 
     // --- 5. CRIAR TABELA DE CAMPOS DO FORMULÁRIO ---
-    // Corrigido: Removi as aspas duplas dos comentários para não quebrar o PHP
     $sqlFields = "CREATE TABLE IF NOT EXISTS form_fields (
         id INT AUTO_INCREMENT PRIMARY KEY,
         form_id INT NOT NULL,
@@ -84,7 +84,37 @@ try {
     $pdo->exec($sqlSubmissions);
     echo "✅ Tabela 'form_submissions' verificada.<br>";
 
-    // --- 7. CRIAR O ADMIN INICIAL ---
+    // --- 7. CRIAR TABELA DE CONFIGURAÇÕES (NOVO) ---
+    // Essencial para salvar SMTP e Recaptcha sem mexer em código
+    $sqlSettings = "CREATE TABLE IF NOT EXISTS settings (
+        setting_key VARCHAR(50) PRIMARY KEY,
+        setting_value TEXT
+    )";
+    $pdo->exec($sqlSettings);
+    echo "✅ Tabela 'settings' verificada.<br>";
+
+    // Insere valores padrão (se não existirem)
+    $defaults = [
+        'smtp_host' => 'smtp.hostinger.com',
+        'smtp_port' => '587',
+        'smtp_user' => '',
+        'smtp_pass' => '',
+        'recaptcha_site_key' => '',
+        'recaptcha_secret' => ''
+    ];
+    
+    $stmtCheck = $pdo->prepare("SELECT count(*) FROM settings WHERE setting_key = ?");
+    $stmtInsert = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)");
+
+    foreach ($defaults as $key => $val) {
+        $stmtCheck->execute([$key]);
+        if ($stmtCheck->fetchColumn() == 0) {
+            $stmtInsert->execute([$key, $val]);
+        }
+    }
+    echo "✅ Configurações padrão inseridas.<br>";
+
+    // --- 8. CRIAR O ADMIN INICIAL ---
     $email = getenv('DEFAULT_ADMIN_EMAIL') ?: 'admin@admin.com';
     $pass  = getenv('DEFAULT_ADMIN_PASS')  ?: 'admin';
 
