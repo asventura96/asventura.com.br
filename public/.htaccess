@@ -1,0 +1,30 @@
+# public/.htaccess
+
+# 1. DESABILITAR LISTAGEM DE DIRETÓRIOS
+# Impede que alguém acesse asventura.com.br/imagens e veja a lista de arquivos
+Options -Indexes
+
+# 2. PROTEGER ARQUIVOS SENSÍVEIS
+# Bloqueia acesso a .env, .git, .yml e outros arquivos de sistema
+<FilesMatch "^\.|^composer\.(json|lock)$|^\.env$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 3. FORÇAR HTTPS (Segurança básica)
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# 4. CABEÇALHOS DE SEGURANÇA (Proteção contra ataques comuns)
+<IfModule mod_headers.c>
+    # Impede que outros sites coloquem o seu dentro de um iframe (Clickjacking)
+    Header always set X-Frame-Options "SAMEORIGIN"
+    # Proteção contra XSS
+    Header always set X-XSS-Protection "1; mode=block"
+    # Evita que o navegador "adivinhe" tipos de arquivo (MIME Sniffing)
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# 5. CONFIGURAÇÃO DE ERROS (Opcional)
+ErrorDocument 404 /404.html
