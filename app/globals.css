@@ -1,38 +1,34 @@
 @import "tailwindcss";
 
-/* --- 1. CONFIGURAÇÃO GERAL --- */
+/* --- CONFIGURAÇÃO VISUAL MASTER --- */
 :root {
-  /* Garante que o fundo seja sempre o Azul Escuro da sua marca */
   --background: #023047;
   --foreground: #ffffff;
 }
 
 body {
-  background-color: #023047; /* Azul Profundo */
-  color: #ffffff;            /* Texto Branco */
-  
-  /* AQUI APLICAMOS A FONTE MONTSERRAT COMO PADRÃO NO CORPO */
-  font-family: var(--font-montserrat), sans-serif;
-  
+  background-color: #023047 !important;
+  color: #ffffff !important;
+  /* Força a fonte Montserrat no corpo todo */
+  font-family: var(--font-montserrat), sans-serif; 
   overflow-x: hidden;
 }
 
-/* --- 2. FORÇAR RAJDHANI NOS TÍTULOS --- */
+/* Títulos sempre em Rajdhani */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-rajdhani), sans-serif;
 }
 
-/* --- 3. ESTILOS DO SWIPER (CARROSSEL) --- */
+/* --- SWIPER (O Carrossel) --- */
 .swiper-button-next,
 .swiper-button-prev {
   background-color: #2ECC40 !important; /* Verde Neon */
-  color: #023047 !important;            /* Seta Azul Escura */
+  color: #023047 !important;            /* Seta Azul */
   width: 44px;
   height: 44px;
   border-radius: 50%;
   transition: transform 0.2s;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-  z-index: 50;
 }
 
 .swiper-button-next:hover,
@@ -47,7 +43,6 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 900;
 }
 
-/* Paginação (Bolinhas) */
 .swiper-pagination-bullet {
   background-color: #ffffff;
   opacity: 0.3;
@@ -55,7 +50,7 @@ h1, h2, h3, h4, h5, h6 {
 .swiper-pagination-bullet-active {
   background-color: #2ECC40 !important;
   opacity: 1;
-  width: 20px;
+  width: 24px;
   border-radius: 6px;
   transition: width 0.3s;
 }

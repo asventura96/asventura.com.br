@@ -16,7 +16,6 @@ export interface ContactForm {
   message: string;
 }
 
-// NOVO: Interface das Configurações
 export interface SiteSettings {
   site_title: string;
   site_description: string;
@@ -27,6 +26,7 @@ export interface SiteSettings {
 
 export async function getProjects(): Promise<Project[]> {
   try {
+    // Busca projetos sem cache
     const response = await fetch(`${API_BASE_URL}/api_projects.php`, { cache: 'no-store' });
     if (!response.ok) throw new Error('Erro API');
     return await response.json();
@@ -48,13 +48,13 @@ export async function submitContactForm(data: ContactForm): Promise<{ success: b
   }
 }
 
-// NOVO: Função para buscar configurações
 export async function getSettings(): Promise<SiteSettings> {
   try {
+    // CORREÇÃO AQUI: Removido 'revalidate: 60' que causava o conflito
     const response = await fetch(`${API_BASE_URL}/api_settings.php`, { 
-      cache: 'no-store',
-      next: { revalidate: 60 } // Revalida a cada 60s
+      cache: 'no-store'
     });
+    
     const json = await response.json();
     return json.data || {};
   } catch (error) {
