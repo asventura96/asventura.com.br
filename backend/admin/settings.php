@@ -4,21 +4,35 @@ require '../config.php';
 
 $msg = "";
 
+// Função auxiliar para Salvar ou Atualizar (Upsert)
+function saveSetting($pdo, $key, $value) {
+    // Verifica se já existe
+    $stmt = $pdo->prepare("SELECT count(*) FROM settings WHERE setting_key = ?");
+    $stmt->execute([$key]);
+    $exists = $stmt->fetchColumn() > 0;
+
+    if ($exists) {
+        $sql = "UPDATE settings SET setting_value = ? WHERE setting_key = ?";
+    } else {
+        $sql = "INSERT INTO settings (setting_value, setting_key) VALUES (?, ?)";
+    }
+    
+    $pdo->prepare($sql)->execute([$value, $key]);
+}
+
 // --- PROCESSAR SALVAMENTO ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save') {
     try {
-        $stmt = $pdo->prepare("UPDATE settings SET setting_value = ? WHERE setting_key = ?");
-        
-        // 1. Salvar Campos de Texto (SMTP, Recaptcha, SEO)
+        // 1. Salvar Campos de Texto
         $textFields = [
             'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 
             'recaptcha_site_key', 'recaptcha_secret',
-            'site_title', 'site_description'
+            'site_title', 'site_description' // <--- Estes agora serão criados se não existirem
         ];
         
         foreach ($textFields as $field) {
             if (isset($_POST[$field])) {
-                $stmt->execute([$_POST[$field], $field]);
+                saveSetting($pdo, $field, $_POST[$field]);
             }
         }
 
@@ -26,20 +40,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $uploadFields = ['site_logo', 'site_favicon'];
         $uploadDir = '../uploads/';
 
+        // Garante que a pasta existe
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
         foreach ($uploadFields as $field) {
             if (isset($_FILES[$field]) && $_FILES[$field]['error'] === 0) {
                 $ext = pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION);
-                $newName = $field . '_' . time() . '.' . $ext; // Ex: site_logo_12345.png
+                // Nome único para evitar cache
+                $newName = $field . '_' . time() . '.' . $ext; 
                 
                 if (move_uploaded_file($_FILES[$field]['tmp_name'], $uploadDir . $newName)) {
-                    // Salva o caminho no banco (ex: /uploads/site_logo_123.png)
                     $path = '/uploads/' . $newName;
-                    $stmt->execute([$path, $field]);
+                    saveSetting($pdo, $field, $path);
                 }
             }
         }
 
-        $msg = "✅ Configurações e imagens salvas com sucesso!";
+        $msg = "✅ Configurações salvas com sucesso!";
     } catch (Exception $e) {
         $msg = "❌ Erro ao salvar: " . $e->getMessage();
     }
@@ -86,36 +103,34 @@ try {
                     <div>
                         <label class="block text-sm font-bold text-gray-600 mb-1">Descrição (Para o Google)</label>
                         <input type="text" name="site_description" value="<?php echo htmlspecialchars($settings['site_description'] ?? ''); ?>" 
-                               placeholder="Ex: Portfólio profissional de desenvolvimento web..." class="w-full p-2 border rounded">
+                               placeholder="Ex: Portfólio profissional..." class="w-full p-2 border rounded">
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                         <div>
-                            <label class="block text-sm font-bold text-gray-600 mb-1">Logotipo do Site</label>
+                            <label class="block text-sm font-bold text-gray-600 mb-1">Logotipo</label>
                             <?php if(!empty($settings['site_logo'])): ?>
-                                <div class="mb-2 bg-gray-800 p-2 rounded inline-block">
-                                    <img src="..<?php echo $settings['site_logo']; ?>" class="h-10 w-auto">
+                                <div class="mb-2 bg-gray-800 p-4 rounded inline-block border border-gray-600">
+                                    <img src="..<?php echo $settings['site_logo']; ?>" class="h-12 w-auto">
                                 </div>
                             <?php endif; ?>
-                            <input type="file" name="site_logo" accept="image/*" class="w-full text-sm text-gray-500">
-                            <p class="text-xs text-gray-400 mt-1">Recomendado: PNG transparente.</p>
+                            <input type="file" name="site_logo" accept="image/*" class="w-full text-sm text-gray-500 border p-1 rounded">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-bold text-gray-600 mb-1">Favicon (Ícone da Aba)</label>
+                            <label class="block text-sm font-bold text-gray-600 mb-1">Favicon</label>
                             <?php if(!empty($settings['site_favicon'])): ?>
-                                <div class="mb-2">
-                                    <img src="..<?php echo $settings['site_favicon']; ?>" class="h-8 w-8 border rounded">
+                                <div class="mb-2 bg-gray-200 p-2 rounded inline-block">
+                                    <img src="..<?php echo $settings['site_favicon']; ?>" class="h-8 w-8">
                                 </div>
                             <?php endif; ?>
-                            <input type="file" name="site_favicon" accept="image/*" class="w-full text-sm text-gray-500">
-                            <p class="text-xs text-gray-400 mt-1">Recomendado: Ícone quadrado (ICO ou PNG).</p>
+                            <input type="file" name="site_favicon" accept="image/*" class="w-full text-sm text-gray-500 border p-1 rounded">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500 opacity-80 hover:opacity-100 transition">
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500 opacity-90 hover:opacity-100 transition">
                 <h2 class="font-bold text-lg mb-4 text-gray-800">📧 E-mail (SMTP)</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -137,7 +152,7 @@ try {
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-orange-500 opacity-80 hover:opacity-100 transition">
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-orange-500 opacity-90 hover:opacity-100 transition">
                 <h2 class="font-bold text-lg mb-4 text-gray-800">🛡️ Google reCAPTCHA</h2>
                 <div class="grid grid-cols-1 gap-4">
                     <input type="text" name="recaptcha_site_key" value="<?php echo htmlspecialchars($settings['recaptcha_site_key'] ?? ''); ?>" placeholder="Site Key" class="w-full p-2 border rounded text-sm">

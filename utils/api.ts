@@ -1,6 +1,5 @@
 // utils/api.ts
 
-// Define a URL base dependendo se está no seu PC ou na Hostinger
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export interface Project {
@@ -17,49 +16,49 @@ export interface ContactForm {
   message: string;
 }
 
-/**
- * Busca a lista de projetos da API PHP.
- */
+// NOVO: Interface das Configurações
+export interface SiteSettings {
+  site_title: string;
+  site_description: string;
+  site_logo: string;
+  site_favicon: string;
+  [key: string]: string;
+}
+
 export async function getProjects(): Promise<Project[]> {
   try {
-    // Aponta para o arquivo que criamos na raiz: api_projects.php
-    const response = await fetch(`${API_BASE_URL}/api_projects.php`, {
-      cache: 'no-store', // Garante dados frescos
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar projetos: ${response.statusText}`);
-    }
-
-    // O seu PHP retorna o array direto, então não verificamos "result.success"
-    const data = await response.json();
-    return data as Project[];
-
+    const response = await fetch(`${API_BASE_URL}/api_projects.php`, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Erro API');
+    return await response.json();
   } catch (error) {
-    console.error('Erro ao conectar com a API de Projetos:', error);
-    // Retorna array vazio para não quebrar o site se a API falhar
     return [];
   }
 }
 
-/**
- * Envia os dados do formulário de contato.
- */
 export async function submitContactForm(data: ContactForm): Promise<{ success: boolean; message: string }> {
   try {
-    // Aponta para o arquivo de contato (que vamos garantir que existe depois)
-    const response = await fetch(`${API_BASE_URL}/contact.php`, {
+    const response = await fetch(`${API_BASE_URL}/api_submit.php`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-
-    const result = await response.json();
-    return result;
+    return await response.json();
   } catch (error) {
-    console.error('Erro ao enviar formulário:', error);
-    return { success: false, message: 'Erro de conexão com o servidor.' };
+    return { success: false, message: 'Erro de conexão.' };
+  }
+}
+
+// NOVO: Função para buscar configurações
+export async function getSettings(): Promise<SiteSettings> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api_settings.php`, { 
+      cache: 'no-store',
+      next: { revalidate: 60 } // Revalida a cada 60s
+    });
+    const json = await response.json();
+    return json.data || {};
+  } catch (error) {
+    console.error("Erro ao buscar settings", error);
+    return { site_title: 'André Ventura', site_description: '', site_logo: '', site_favicon: '' };
   }
 }
