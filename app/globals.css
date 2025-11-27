@@ -7,8 +7,8 @@
 }
 
 body {
-  background-color: #023047 !important;
-  color: #ffffff !important;
+  background-color: #023047;
+  color: #ffffff;
   /* Força a fonte Montserrat no corpo todo */
   font-family: var(--font-montserrat), sans-serif; 
   overflow-x: hidden;
@@ -22,8 +22,8 @@ h1, h2, h3, h4, h5, h6 {
 /* --- SWIPER (O Carrossel) --- */
 .swiper-button-next,
 .swiper-button-prev {
-  background-color: #2ECC40 !important; /* Verde Neon */
-  color: #023047 !important;            /* Seta Azul */
+  background-color: #2ECC40; /* Verde Neon */
+  color: #023047;            /* Seta Azul */
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -34,12 +34,12 @@ h1, h2, h3, h4, h5, h6 {
 .swiper-button-next:hover,
 .swiper-button-prev:hover {
   transform: scale(1.1);
-  background-color: #ffffff !important;
+  background-color: #ffffff;
 }
 
 .swiper-button-next::after,
 .swiper-button-prev::after {
-  font-size: 18px !important;
+  font-size: 18px;
   font-weight: 900;
 }
 
@@ -48,7 +48,7 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 0.3;
 }
 .swiper-pagination-bullet-active {
-  background-color: #2ECC40 !important;
+  background-color: #2ECC40;
   opacity: 1;
   width: 24px;
   border-radius: 6px;
