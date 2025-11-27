@@ -1,5 +1,5 @@
 <?php
-// backend/api_form.php
+// backend/api/api_form.php
 
 // Ativa exibição de erros (útil em dev, desativar em prod)
 ini_set('display_errors', 1);

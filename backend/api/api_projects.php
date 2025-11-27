@@ -1,5 +1,5 @@
 <?php
-// backend/api_projects.php
+// backend/api/api_projects.php
 require 'config.php';
 
 // 1. Headers para permitir acesso do Next.js e definir JSON

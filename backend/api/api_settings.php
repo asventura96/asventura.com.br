@@ -1,4 +1,6 @@
 <?php
+// backend/api/api_settings.php
+
 require 'config.php';
 
 // CORS (Para o Next.js acessar)
