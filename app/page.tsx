@@ -1,3 +1,5 @@
+// app/page.tsx
+
 import Image from 'next/image';
 // Importamos o novo componente inteligente
 import ProjectsArea from '../components/ProjectsArea';
