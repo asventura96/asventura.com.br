@@ -7,8 +7,8 @@ error_reporting(E_ALL);
 
 session_start();
 require_once __DIR__ . '/../config.php';
-require 'includes/Layout.php';
-require 'includes/Components.php';
+require_once __DIR__ . '/includes/Layout.php';
+require_once __DIR__ . '/includes/Components.php';
 
 // Verifica Login
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
