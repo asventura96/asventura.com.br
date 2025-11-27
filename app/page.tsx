@@ -32,6 +32,7 @@ export default function Home() {
   
   // Estado para dados do Backend (Logo, Título do site, etc)
   const [siteSettings, setSiteSettings] = useState<{ logo_url?: string; site_name?: string } | null>(null);
+  const [isLoadingLogo, setIsLoadingLogo] = useState(true); // Novo: loading state para logo
 
   // --- EFEITOS ---
   
@@ -48,14 +49,16 @@ export default function Home() {
   useEffect(() => {
     async function fetchSettings() {
       try {
-        // Ajuste o endpoint conforme seu backend real. Ex: api_settings.php
+        setIsLoadingLogo(true);
         const res = await fetch(`${API_BASE_URL}/api_settings.php`); 
         if (res.ok) {
-            const data = await res.json();
-            setSiteSettings(data);
+          const data = await res.json();
+          setSiteSettings(data);
         }
       } catch (error) {
         console.error("Erro ao buscar configurações do site:", error);
+      } finally {
+        setIsLoadingLogo(false);
       }
     }
     fetchSettings();
@@ -76,35 +79,38 @@ export default function Home() {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${theme.bg} ${theme.text} font-sans selection:bg-[#2ECC40] selection:text-[#023047]`}>
+    <div className={`min-h-screen transition-all duration-500 ${theme.bg} ${theme.text} font-sans selection:bg-[#2ECC40] selection:text-white`}>
       
       {/* --- HEADER --- */}
       <header className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${scrolled ? theme.border : 'border-transparent'} ${theme.navBg}`}>
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           
-          {/* LOGO: Prioriza a imagem do backend, senão usa texto */}
+          {/* LOGO: Prioriza a imagem do backend, com loading */}
           <div className="flex flex-col leading-none cursor-pointer group">
-            {siteSettings?.logo_url ? (
-                <div className="relative h-12 w-40">
-                    <Image 
-                        src={`${API_BASE_URL}${siteSettings.logo_url}`} 
-                        alt={siteSettings.site_name || "André Ventura"} 
-                        fill
-                        className="object-contain object-left"
-                    />
-                </div>
+            {isLoadingLogo ? (
+              <div className="h-12 w-40 animate-pulse bg-gray-500/20 rounded"></div> // Placeholder loading
+            ) : siteSettings?.logo_url ? (
+              <div className="relative h-12 w-40">
+                <Image 
+                  src={`${API_BASE_URL}${siteSettings.logo_url}`} 
+                  alt={siteSettings.site_name || "André Ventura"} 
+                  fill
+                  className="object-contain object-left transition-opacity duration-300 opacity-0 animate-fade-in"
+                  onLoad={(e) => e.currentTarget.classList.add('opacity-100')}
+                />
+              </div>
             ) : (
-                <>
-                    <span className={`text-2xl font-bold tracking-widest uppercase font-rajdhani group-hover:text-[#2ECC40] transition-colors`}>
-                    André
-                    </span>
-                    <div className="flex items-center gap-2">
-                    <div className="h-0.5 w-6 bg-[#2ECC40]"></div>
-                    <span className="text-xl font-bold tracking-widest text-[#89D6FB] font-rajdhani uppercase">
-                        Ventura
-                    </span>
-                    </div>
-                </>
+              <>
+                <span className={`text-2xl font-bold tracking-widest uppercase font-rajdhani group-hover:text-[#2ECC40] transition-colors`}>
+                  André
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="h-0.5 w-6 bg-[#2ECC40]"></div>
+                  <span className="text-xl font-bold tracking-widest text-[#89D6FB] font-rajdhani uppercase">
+                    Ventura
+                  </span>
+                </div>
+              </>
             )}
           </div>
 
@@ -128,7 +134,7 @@ export default function Home() {
           {/* MENU MOBILE TOGGLE */}
           <div className="flex items-center gap-4 md:hidden">
             <button onClick={toggleTheme} className={isDarkMode ? 'text-[#FF8D37]' : 'text-[#5D3FD3]'}>
-                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-[#2ECC40]">
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -151,7 +157,7 @@ export default function Home() {
       <main className="w-full">
         
         {/* --- HERO SECTION --- */}
-        <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6 overflow-hidden min-h-[600px] flex items-center">
+        <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6 overflow-hidden min-h-[600px] flex items-center animate-fade-in-up"> {/* Adicionei animação */}
           {/* Background FX */}
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#5D3FD3]/20 rounded-full blur-[100px] -z-10 translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
           <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#2ECC40]/10 rounded-full blur-[80px] -z-10 -translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
@@ -170,7 +176,7 @@ export default function Home() {
               <h1 className="text-4xl sm:text-6xl font-bold leading-[1.1] font-rajdhani">
                 Transformando suas ideias em <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2ECC40] to-[#89D6FB]">
-                   experiências digitais.
+                  experiências digitais.
                 </span>
               </h1>
               
@@ -191,86 +197,89 @@ export default function Home() {
               <div className="pt-8 border-t border-white/10 mt-8">
                 <p className="text-xs uppercase tracking-widest mb-4 opacity-60">Ferramentas que domino</p>
                 <div className="flex flex-wrap gap-6 opacity-80">
-                   <span className="font-bold text-lg flex items-center gap-2"><Layout size={20} className="text-[#2ECC40]"/> WordPress</span>
-                   <span className="font-bold text-lg flex items-center gap-2"><Layers size={20} className="text-[#5D3FD3]"/> Elementor & Divi</span>
-                   <span className="font-bold text-lg flex items-center gap-2"><ShoppingCart size={20} className="text-[#FF8D37]"/> WooCommerce</span>
+                  <span className="font-bold text-lg flex items-center gap-2"><Layout size={20} className="text-[#2ECC40]"/> WordPress</span>
+                  <span className="font-bold text-lg flex items-center gap-2"><Layers size={20} className="text-[#5D3FD3]"/> Elementor & Divi</span>
+                  <span className="font-bold text-lg flex items-center gap-2"><ShoppingCart size={20} className="text-[#FF8D37]"/> WooCommerce</span>
                 </div>
               </div>
             </div>
 
-            {/* Imagem Hero */}
+            {/* Imagem Hero – Adicionei lazy loading e placeholder */}
             <div className="relative hidden lg:block h-[500px]">
-               <div className={`relative z-10 rounded-2xl overflow-hidden border ${theme.border} shadow-2xl group h-full`}>
-                 <div className="absolute inset-0 bg-[#023047]/40 group-hover:bg-transparent transition-all duration-500 z-10"></div>
-                 <Image 
-                    src="/images/landing.jpg" 
-                    alt="André Ventura - Web Developer" 
-                    fill
-                    className="object-cover"
-                    priority
-                    style={{ backgroundColor: '#023047' }}
-                 />
-               </div>
-               <div className="absolute -bottom-6 -right-6 w-full h-full border-2 border-[#2ECC40] rounded-2xl -z-10"></div>
+              <div className={`relative z-10 rounded-2xl overflow-hidden border ${theme.border} shadow-2xl group h-full`}>
+                <div className="absolute inset-0 bg-[#023047]/40 group-hover:bg-transparent transition-all duration-500 z-10"></div>
+                <Image 
+                  src="/images/landing.jpg" 
+                  alt="André Ventura - Web Developer" 
+                  fill
+                  className="object-cover"
+                  priority={false}
+                  loading="lazy"
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABgj/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA=" // Placeholder base64 genérico para imagem
+                  style={{ backgroundColor: '#023047' }}
+                />
+              </div>
+              <div className="absolute -bottom-6 -right-6 w-full h-full border-2 border-[#2ECC40] rounded-2xl -z-10"></div>
             </div>
           </div>
         </section>
 
         {/* --- SERVIÇOS --- */}
         <section id="services" className={`py-24 ${isDarkMode ? 'bg-[#034061]/30' : 'bg-white'}`}>
-           <div className="max-w-7xl mx-auto px-6">
-              <div className="text-center mb-16">
-                 <h2 className="text-3xl sm:text-5xl font-bold font-rajdhani uppercase mb-4">
-                    O que eu faço
-                 </h2>
-                 <div className="h-1 w-24 bg-[#2ECC40] mx-auto rounded-full"></div>
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16 animate-fade-in-up delay-100"> {/* Animação */}
+              <h2 className="text-3xl sm:text-5xl font-bold font-rajdhani uppercase mb-4">
+                O que eu faço
+              </h2>
+              <div className="h-1 w-24 bg-[#2ECC40] mx-auto rounded-full"></div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {/* WP */}
+              <div className={`p-8 rounded-2xl border ${theme.border} ${theme.cardBg} hover:border-[#2ECC40] transition-all hover:-translate-y-2 group`}>
+                <div className="w-14 h-14 bg-[#2ECC40]/20 rounded-lg flex items-center justify-center text-[#2ECC40] mb-6">
+                  <Layout size={32} />
+                </div>
+                <h3 className="text-xl font-bold mb-3 font-rajdhani uppercase">Sites Institucionais</h3>
+                <p className={`text-sm ${theme.textMuted} leading-relaxed`}>
+                  Criação de sites profissionais com <strong>WordPress</strong>. Entrega rápida, painel fácil de gerenciar e layouts modernos.
+                </p>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-8">
-                 {/* WP */}
-                 <div className={`p-8 rounded-2xl border ${theme.border} ${theme.cardBg} hover:border-[#2ECC40] transition-all hover:-translate-y-2 group`}>
-                    <div className="w-14 h-14 bg-[#2ECC40]/20 rounded-lg flex items-center justify-center text-[#2ECC40] mb-6">
-                        <Layout size={32} />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 font-rajdhani uppercase">Sites Institucionais</h3>
-                    <p className={`text-sm ${theme.textMuted} leading-relaxed`}>
-                        Criação de sites profissionais com <strong>WordPress</strong>. Entrega rápida, painel fácil de gerenciar e layouts modernos.
-                    </p>
-                 </div>
-
-                 {/* Woo */}
-                 <div className={`p-8 rounded-2xl border ${theme.border} ${theme.cardBg} hover:border-[#5D3FD3] transition-all hover:-translate-y-2 group`}>
-                    <div className="w-14 h-14 bg-[#5D3FD3]/20 rounded-lg flex items-center justify-center text-[#5D3FD3] mb-6">
-                        <ShoppingCart size={32} />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 font-rajdhani uppercase">Lojas WooCommerce</h3>
-                    <p className={`text-sm ${theme.textMuted} leading-relaxed`}>
-                        Transforme visitantes em clientes. Implementação completa de <strong>WooCommerce</strong> com integração de pagamentos e correios.
-                    </p>
-                 </div>
-
-                 {/* Builders */}
-                 <div className={`p-8 rounded-2xl border ${theme.border} ${theme.cardBg} hover:border-[#FF8D37] transition-all hover:-translate-y-2 group`}>
-                    <div className="w-14 h-14 bg-[#FF8D37]/20 rounded-lg flex items-center justify-center text-[#FF8D37] mb-6">
-                        <Palette size={32} />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 font-rajdhani uppercase">Elementor & Divi</h3>
-                    <p className={`text-sm ${theme.textMuted} leading-relaxed`}>
-                        Domínio total dos principais construtores visuais do mercado. Liberdade total para editar o conteúdo do seu site.
-                    </p>
-                 </div>
+              {/* Woo */}
+              <div className={`p-8 rounded-2xl border ${theme.border} ${theme.cardBg} hover:border-[#5D3FD3] transition-all hover:-translate-y-2 group`}>
+                <div className="w-14 h-14 bg-[#5D3FD3]/20 rounded-lg flex items-center justify-center text-[#5D3FD3] mb-6">
+                  <ShoppingCart size={32} />
+                </div>
+                <h3 className="text-xl font-bold mb-3 font-rajdhani uppercase">Lojas WooCommerce</h3>
+                <p className={`text-sm ${theme.textMuted} leading-relaxed`}>
+                  Transforme visitantes em clientes. Implementação completa de <strong>WooCommerce</strong> com integração de pagamentos e correios.
+                </p>
               </div>
-           </div>
+
+              {/* Builders */}
+              <div className={`p-8 rounded-2xl border ${theme.border} ${theme.cardBg} hover:border-[#FF8D37] transition-all hover:-translate-y-2 group`}>
+                <div className="w-14 h-14 bg-[#FF8D37]/20 rounded-lg flex items-center justify-center text-[#FF8D37] mb-6">
+                  <Palette size={32} />
+                </div>
+                <h3 className="text-xl font-bold mb-3 font-rajdhani uppercase">Elementor & Divi</h3>
+                <p className={`text-sm ${theme.textMuted} leading-relaxed`}>
+                  Domínio total dos principais construtores visuais do mercado. Liberdade total para editar o conteúdo do seu site.
+                </p>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* --- PROJETOS --- */}
-        <section id="projects" className="py-24 relative overflow-hidden">
+        <section id="projects" className="py-24 relative overflow-hidden animate-fade-in-up delay-200"> {/* Animação */}
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex items-center gap-4 mb-16">
-               <h2 className="text-3xl font-bold uppercase whitespace-nowrap font-rajdhani">
-                 Meus Projetos
-               </h2>
-               <div className="h-px w-full bg-gradient-to-r from-[#2ECC40] to-transparent opacity-50 mt-1"></div>
+              <h2 className="text-3xl font-bold uppercase whitespace-nowrap font-rajdhani">
+                Meus Projetos
+              </h2>
+              <div className="h-px w-full bg-gradient-to-r from-[#2ECC40] to-transparent opacity-50 mt-1"></div>
             </div>
             
             <ProjectsArea />
@@ -279,43 +288,44 @@ export default function Home() {
         </section>
 
         {/* --- CONTATO --- */}
-        <section id="contact" className={`py-20 border-t ${theme.border}`}>
-            <div className="max-w-4xl mx-auto px-6">
-                <div className={`rounded-3xl p-8 md:p-12 ${isDarkMode ? 'bg-gradient-to-br from-[#034061] to-[#023047]' : 'bg-white shadow-xl'} border ${theme.border}`}>
-                    <div className="text-center mb-10">
-                        <h2 className="text-3xl font-bold font-rajdhani uppercase mb-4">Vamos conversar?</h2>
-                        <p className={theme.textMuted}>Preencha o formulário abaixo para solicitar um orçamento.</p>
-                    </div>
+        <section id="contact" className={`py-20 border-t ${theme.border} animate-fade-in-up delay-300`}> {/* Animação */}
+          <div className="max-w-4xl mx-auto px-6">
+            <div className={`rounded-3xl p-8 md:p-12 ${isDarkMode ? 'bg-gradient-to-br from-[#034061] to-[#023047]' : 'bg-white shadow-xl'} border ${theme.border}`}>
+              <div className="text-center mb-10">
+                <h2 className="text-3xl font-bold font-rajdhani uppercase mb-4">Vamos conversar?</h2>
+                <p className={theme.textMuted}>Preencha o formulário abaixo para solicitar um orçamento.</p>
+              </div>
 
-                    <DynamicForm slug="contact-form-main" />
+              <DynamicForm slug="contact-form-main" /> {/* Assuma que button tem class 'submit-button' – adicione estilo global em globals.css: .submit-button { bg-[#2ECC40] text-[#023047] hover:shadow-lg ... } */}
 
-                </div>
             </div>
+          </div>
         </section>
 
         {/* --- FOOTER --- */}
         <footer className={`py-12 border-t ${theme.border} ${isDarkMode ? 'bg-[#011a28]' : 'bg-[#D4F0FC]'}`}>
-            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-                
-                <div className="flex flex-col items-center md:items-start">
-                    <span className="text-2xl font-bold tracking-widest font-rajdhani uppercase flex gap-2">
-                        André <span className="text-[#2ECC40]">Ventura</span>
-                    </span>
-                    <p className={`text-xs mt-2 ${theme.textMuted}`}>Desenvolvimento Web & WordPress</p>
-                </div>
-
-                <div className="flex gap-6">
-                    <a href="https://github.com/asventura96" target="_blank" rel="noreferrer" className={`${theme.textMuted} hover:text-[#2ECC40] transition-colors`}>
-                        <Github size={20} />
-                    </a>
-                    <a href="mailto:contato@asventura.com.br" className={`${theme.textMuted} hover:text-[#2ECC40] transition-colors`}>
-                        <Mail size={20} />
-                    </a>
-                    <a href="#" className={`${theme.textMuted} hover:text-[#2ECC40] transition-colors`}>
-                        <Linkedin size={20} />
-                    </a>
-                </div>
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            
+            <div className="flex flex-col items-center md:items-start">
+              <span className="text-2xl font-bold tracking-widest font-rajdhani uppercase flex gap-2">
+                André <span className="text-[#2ECC40]">Ventura</span>
+              </span>
+              <p className={`text-xs mt-2 ${theme.textMuted}`}>Desenvolvimento Web & WordPress</p>
+              <p className={`text-xs mt-1 ${theme.textMuted} opacity-60`}>© 2025 Todos os direitos reservados.</p> {/* Adicionado copyright */}
             </div>
+
+            <div className="flex gap-6">
+              <a href="https://github.com/asventura96" target="_blank" rel="noreferrer" className={`${theme.textMuted} hover:text-[#2ECC40] transition-colors`}>
+                <Github size={20} />
+              </a>
+              <a href="mailto:contato@asventura.com.br" className={`${theme.textMuted} hover:text-[#2ECC40] transition-colors`}>
+                <Mail size={20} />
+              </a>
+              <a href="#" className={`${theme.textMuted} hover:text-[#2ECC40] transition-colors`}>
+                <Linkedin size={20} />
+              </a>
+            </div>
+          </div>
         </footer>
 
       </main>
