@@ -14,7 +14,6 @@ import {
   ArrowRight, 
   Github, 
   Linkedin, 
-  Instagram, 
   Mail,
   Palette,
   Layers
