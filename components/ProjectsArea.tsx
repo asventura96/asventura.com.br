@@ -1,3 +1,5 @@
+// components/ProjectsArea.tsx
+
 'use client'; // Isso diz que roda no navegador do usuário
 
 import { useEffect, useState } from 'react';
