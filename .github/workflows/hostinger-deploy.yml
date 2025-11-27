@@ -33,11 +33,21 @@ jobs:
       # 5. PREPARAR PASTA PARA ENVIO
       - name: 🗂️ Prepare Dist Folder
         run: |
-          mkdir dist
+          mkdir -p dist
+          # Copia o site Next.js
           cp -r out/* dist/
+          
+          # Copia o backend da raiz
           cp backend/*.php dist/
+          
+          # Cria a pasta admin e copia os arquivos dela
           mkdir -p dist/admin
           cp backend/admin/*.php dist/admin/
+          
+          # --- CORREÇÃO: COPIAR A PASTA INCLUDES ---
+          cp -r backend/admin/includes dist/admin/
+          
+          # Cria a pasta de uploads
           mkdir -p dist/uploads
 
       # 6. UPLOAD VIA LFTP
