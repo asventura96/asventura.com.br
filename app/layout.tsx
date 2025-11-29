@@ -1,7 +1,8 @@
 // app/layout.tsx
+
 import "./globals.css";
 import { Rajdhani, Montserrat, Roboto } from "next/font/google";
-import { API_BASE_URL } from "../utils/api";
+import { API_BASE_URL, IMG_BASE_URL } from "../utils/api";
 
 const rajdhani = Rajdhani({ subsets: ["latin"], weight: ["300","400","500","600","700"], variable: "--font-rajdhani", display: "swap" });
 const montserrat = Montserrat({ subsets: ["latin"], weight: ["300","400","500","600","700"], variable: "--font-montserrat", display: "swap" });
@@ -10,10 +11,16 @@ const roboto = Roboto({ subsets: ["latin"], weight: ["300","400","500","700"], v
 // Metadata dinâmico com fallback
 export async function generateMetadata() {
   try {
+    // O fetch continua na API (CORRETO)
     const res = await fetch(`${API_BASE_URL}/api_settings.php`, { next: { revalidate: 60 } });
     const json = await res.json();
+    
     if (json.success && json.data) {
-      const favicon = json.data.site_favicon ? `${API_BASE_URL}${json.data.site_favicon}` : "/favicon.ico";
+      // 2. CORREÇÃO AQUI: O favicon é imagem, usa a URL da raiz (IMG_BASE_URL)
+      const favicon = json.data.site_favicon 
+        ? `${IMG_BASE_URL}${json.data.site_favicon}` 
+        : "/favicon.ico";
+
       return {
         title: json.data.site_title || "André Ventura",
         description: json.data.site_description || "Desenvolvimento Web & WordPress",
