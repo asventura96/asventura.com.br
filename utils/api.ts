@@ -1,6 +1,10 @@
 // utils/api.ts
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// A URL da API (deve terminar com /api em produção)
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
+// A URL do Site/Imagens (deve ser a raiz, sem /api)
+export const IMG_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:8000';
 
 export interface Project {
   id: number;

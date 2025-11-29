@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
-import { API_BASE_URL } from '../utils/api';
+import { IMG_BASE_URL } from '../utils/api';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -47,9 +47,10 @@ export default function ProjectSlider({ data }: ProjectSliderProps) {
         className="my-swiper"
       >
         {data.map((project) => {
+          // CORREÇÃO: Usa IMG_BASE_URL (Raiz) em vez de API_BASE_URL (/api)
           const imageUrl = project.image_url.startsWith('http') 
             ? project.image_url 
-            : `${API_BASE_URL}${project.image_url}`;
+            : `${IMG_BASE_URL}${project.image_url}`;
 
           return (
             <SwiperSlide key={project.id}>
@@ -98,7 +99,7 @@ export default function ProjectSlider({ data }: ProjectSliderProps) {
         })}
       </Swiper>
 
-      {/* Botões de navegação customizados (agora perfeitos e proporcionais) */}
+      {/* Botões de navegação customizados */}
       <button className="custom-swiper-button-prev absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-[#023047]/80 backdrop-blur-md border border-[#2ECC40]/40 text-[#2ECC40] flex items-center justify-center hover:bg-[#2ECC40] hover:text-[#023047] transition-all duration-300 shadow-xl">
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
       </button>
