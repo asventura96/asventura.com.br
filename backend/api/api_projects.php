@@ -1,6 +1,7 @@
 <?php
 // backend/api/api_projects.php
-require 'config.php';
+
+require '../config.php';
 
 // 1. Headers para permitir acesso do Next.js e definir JSON
 header("Access-Control-Allow-Origin: *");

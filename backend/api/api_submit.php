@@ -1,7 +1,7 @@
 <?php
 // backend/api/api_submit.php
 
-require 'config.php';
+require '../config.php';
 
 // CORS
 if (isset($_SERVER['HTTP_ORIGIN'])) {

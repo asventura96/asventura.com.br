@@ -5,7 +5,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require 'config.php';
+require '../config.php';
 
 // 1. Configuração de CORS (Essencial para Next.js falar com PHP)
 if (isset($_SERVER['HTTP_ORIGIN'])) {
