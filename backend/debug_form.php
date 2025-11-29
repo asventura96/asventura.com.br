@@ -1,6 +1,7 @@
 <?php
 // backend/debug_form.php
-require 'config.php';
+
+require '../config.php';
 
 echo "<h1>🔍 Diagnóstico do Banco de Dados</h1>";
 

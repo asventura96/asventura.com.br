@@ -6,7 +6,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-require 'config.php';
+require '../config.php';
 
 echo "<h1>🛠️ Iniciando Instalação e Atualização do Banco de Dados...</h1>";
 

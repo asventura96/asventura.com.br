@@ -1,5 +1,7 @@
 <?php
-require_once __DIR__ . '/config.php';
+// backend/test_api.php
+
+require '../config.php';
 
 // Insere dados de teste no banco de dados
 function insert_test_data($pdo) {
