@@ -2,13 +2,12 @@
 
 import { MetadataRoute } from 'next'
 
+export const dynamic = 'force-static'
+
 export default function sitemap(): MetadataRoute.Sitemap {
-
-    const baseUrl = 'https://asventura.com.br'
-
   return [
     {
-      url: baseUrl,
+      url: 'https://asventura.com.br',
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 1,
