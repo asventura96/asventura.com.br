@@ -1,5 +1,6 @@
 <?php
 // backend/admin/contracts.php
+
 session_start();
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/includes/Layout.php';
@@ -14,7 +15,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 $message = '';
 $msgType = '';
 
-// --- LÓGICA DE GERAÇÃO DE NÚMERO (AAAA/0000) ---
+// --- GERAÇÃO DE NÚMERO SEQUENCIAL ---
 function generateContractNumber($pdo) {
     $year = date('Y');
     $stmt = $pdo->prepare("SELECT contract_number FROM contracts WHERE contract_number LIKE ? ORDER BY id DESC LIMIT 1");
@@ -36,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         if ($action === 'create' || $action === 'edit') {
+            // Coleta dados
             $client_id = $_POST['client_id'];
             $plan_id = $_POST['plan_id'];
             $payment_method_id = $_POST['payment_method_id'];
@@ -47,13 +49,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $status = $_POST['status'];
 
             if ($action === 'create') {
-                // REMOVIDO: Lógica de Token e PDF
                 $contract_number = generateContractNumber($pdo);
+                // GERA TOKEN ÚNICO PARA O CLIENTE
+                $token = bin2hex(random_bytes(32)); 
 
-                // SQL corrigido: Não tenta mais salvar 'token'
-                $sql = "INSERT INTO contracts (contract_number, client_id, plan_id, payment_method_id, domain_url, monthly_price, due_day, issue_date, start_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $sql = "INSERT INTO contracts (contract_number, client_id, plan_id, payment_method_id, domain_url, monthly_price, due_day, issue_date, start_date, status, token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$contract_number, $client_id, $plan_id, $payment_method_id, $domain_url, $monthly_price, $due_day, $issue_date, $start_date, $status]);
+                $stmt->execute([$contract_number, $client_id, $plan_id, $payment_method_id, $domain_url, $monthly_price, $due_day, $issue_date, $start_date, $status, $token]);
                 $message = "Contrato $contract_number criado com sucesso!";
             } else {
                 $id = $_POST['id'];
@@ -124,7 +126,10 @@ Layout::header('Gestão de Contratos');
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                    <?php foreach($contracts as $contract): ?>
+                    <?php foreach($contracts as $contract): 
+                        // Link Público para o cliente (Ainda vamos criar o arquivo contract_sign.php)
+                        $publicLink = "https://" . $_SERVER['HTTP_HOST'] . "/contract_sign.php?token=" . $contract['token'];
+                    ?>
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition text-sm text-slate-700 dark:text-slate-300">
                         <td class="p-4 font-mono font-bold text-brand-blue"><?php echo $contract['contract_number']; ?></td>
                         <td class="p-4 font-bold"><?php echo htmlspecialchars($contract['client_name']); ?></td>
@@ -137,19 +142,30 @@ Layout::header('Gestão de Contratos');
                             <?php 
                                 $statusColors = [
                                     'draft' => 'bg-gray-100 text-gray-600',
+                                    'sent' => 'bg-blue-100 text-blue-700',
                                     'active' => 'bg-green-100 text-green-700',
+                                    'signed' => 'bg-purple-100 text-purple-700',
                                     'suspended' => 'bg-red-100 text-red-700',
                                     'cancelled' => 'bg-slate-200 text-slate-500 line-through'
                                 ];
                                 $color = $statusColors[$contract['status']] ?? 'bg-gray-100';
-                                $label = [
-                                    'draft' => 'Rascunho', 'active' => 'Ativo', 'suspended' => 'Suspenso', 'cancelled' => 'Cancelado'
-                                ][$contract['status']] ?? $contract['status'];
+                                $labelMap = [
+                                    'draft' => 'Rascunho', 'sent' => 'Enviado', 'active' => 'Ativo', 'signed' => 'Assinado', 'suspended' => 'Suspenso', 'cancelled' => 'Cancelado'
+                                ];
+                                $label = $labelMap[$contract['status']] ?? $contract['status'];
                             ?>
                             <span class="px-2 py-1 rounded text-xs font-bold uppercase <?php echo $color; ?>"><?php echo $label; ?></span>
                         </td>
                         <td class="p-4 text-right flex justify-end gap-2">
+                            
+                            <button @click="copyLink('<?php echo $publicLink; ?>')" class="text-slate-400 hover:text-brand-green p-1" title="Copiar Link para Cliente">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                            </button>
+
                             <button @click='editContract(<?php echo json_encode($contract); ?>)' class="text-slate-400 hover:text-brand-blue p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg></button>
+                            
                             <form method="POST" onsubmit="return confirm('Excluir este contrato?');">
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="id" value="<?php echo $contract['id']; ?>">
@@ -245,6 +261,7 @@ Layout::header('Gestão de Contratos');
                             <label class="block text-xs font-bold text-slate-500 mb-1">Status</label>
                             <select name="status" x-model="form.status" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white font-bold">
                                 <option value="draft">Rascunho</option>
+                                <option value="sent" class="text-blue-600">Enviado</option>
                                 <option value="active" class="text-green-600">Ativo</option>
                                 <option value="suspended" class="text-red-600">Suspenso</option>
                                 <option value="cancelled">Cancelado</option>
@@ -284,6 +301,11 @@ document.addEventListener('alpine:init', () => {
             const planId = e.target.value;
             const plan = this.plans.find(p => p.id == planId);
             if(plan) this.form.monthly_price = plan.price;
+        },
+        copyLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copiado para a área de transferência!');
+            });
         }
     }));
 });
