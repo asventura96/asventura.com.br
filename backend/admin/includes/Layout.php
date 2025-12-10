@@ -145,6 +145,9 @@ class Layout {
                     <div class="flex items-center gap-4 text-sm font-medium">
                         <div class="hidden md:flex gap-6 mr-4">
                             <a href="index.php" class="text-slate-600 dark:text-slate-300 hover:text-brand-green dark:hover:text-brand-green transition">Dashboard</a>
+                            
+                            <a href="clients.php" class="text-slate-600 dark:text-slate-300 hover:text-brand-green dark:hover:text-brand-green transition font-bold">Clientes</a>
+
                             <a href="projects.php" class="text-slate-600 dark:text-slate-300 hover:text-brand-green dark:hover:text-brand-green transition">Projetos</a>
                             <a href="forms.php" class="text-slate-600 dark:text-slate-300 hover:text-brand-green dark:hover:text-brand-green transition">Formulários</a>
                         </div>
