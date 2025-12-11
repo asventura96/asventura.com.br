@@ -41,7 +41,7 @@ Layout::header('Dashboard');
             <p class="text-slate-500 dark:text-slate-400 mt-1">Bem-vindo ao seu painel de controle.</p>
         </div>
         <div class="text-sm font-mono text-brand-blue bg-blue-50 dark:bg-slate-800 dark:text-brand-blue px-3 py-1 rounded border border-blue-100 dark:border-slate-700">
-            <?php echo date('d/m/Y'); ?> • v2.5
+            <?php echo date('d/m/Y'); ?> • v1.2.0
         </div>
     </div>
 
