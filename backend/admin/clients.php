@@ -1,5 +1,6 @@
 <?php
 // backend/admin/clients.php
+
 session_start();
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/includes/Layout.php';
@@ -14,7 +15,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 $message = '';
 $msgType = '';
 
-// --- FUNÇÕES PHP (Visualização na Lista) ---
+// --- FUNÇÕES DE VISUALIZAÇÃO ---
 function formatDoc($doc) {
     $doc = preg_replace("/[^0-9]/", "", $doc);
     $len = strlen($doc);
@@ -54,17 +55,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $neigh = $_POST['neighborhood'];
             $city = $_POST['city'];
             $state = $_POST['state'];
+            $obs = $_POST['observations']; // NOVO CAMPO
 
             if ($action === 'create') {
-                $sql = "INSERT INTO clients (type, name, document, email, billing_email, phone, website, zip_code, address, number, complement, neighborhood, city, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $sql = "INSERT INTO clients (type, name, document, email, billing_email, phone, website, zip_code, address, number, complement, neighborhood, city, state, observations) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$type, $name, $document, $email, $billing_email, $phone, $website, $zip, $addr, $num, $comp, $neigh, $city, $state]);
+                $stmt->execute([$type, $name, $document, $email, $billing_email, $phone, $website, $zip, $addr, $num, $comp, $neigh, $city, $state, $obs]);
                 $message = "Cliente cadastrado!";
             } else {
                 $id = $_POST['id'];
-                $sql = "UPDATE clients SET type=?, name=?, document=?, email=?, billing_email=?, phone=?, website=?, zip_code=?, address=?, number=?, complement=?, neighborhood=?, city=?, state=? WHERE id=?";
+                $sql = "UPDATE clients SET type=?, name=?, document=?, email=?, billing_email=?, phone=?, website=?, zip_code=?, address=?, number=?, complement=?, neighborhood=?, city=?, state=?, observations=? WHERE id=?";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$type, $name, $document, $email, $billing_email, $phone, $website, $zip, $addr, $num, $comp, $neigh, $city, $state, $id]);
+                $stmt->execute([$type, $name, $document, $email, $billing_email, $phone, $website, $zip, $addr, $num, $comp, $neigh, $city, $state, $obs, $id]);
                 $message = "Cliente atualizado!";
             }
             $msgType = 'success';
@@ -124,9 +126,7 @@ Layout::header('Gestão de Clientes');
                     </div>
                 </div>
                 <h3 class="font-bold text-lg text-brand-dark dark:text-white mb-1 truncate"><?php echo htmlspecialchars($client['name']); ?></h3>
-                
                 <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 font-mono select-all"><?php echo formatDoc($client['document']); ?></p>
-                
                 <div class="space-y-1 text-sm text-slate-600 dark:text-slate-300">
                     <p class="truncate">📧 <?php echo htmlspecialchars($client['email']); ?></p>
                     <p>📱 <?php echo formatPhone($client['phone']); ?></p>
@@ -138,121 +138,123 @@ Layout::header('Gestão de Clientes');
         <?php endforeach; ?>
     </div>
 
-    <div x-show="showModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="showModal" x-transition.opacity class="fixed inset-0 bg-gray-900 bg-opacity-75"></div>
-            <div x-show="showModal" x-transition.scale class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                
-                <div class="bg-brand-dark px-4 py-3 sm:px-6 flex justify-between items-center">
-                    <h3 class="text-lg leading-6 font-medium text-white" x-text="isEdit ? 'Editar Cliente' : 'Novo Cliente'"></h3>
-                    <button @click="showModal = false" class="text-slate-400 hover:text-white">✕</button>
+    <div x-show="showModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4 overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl overflow-hidden my-8" @click.away="showModal = false">
+            
+            <div class="bg-brand-dark px-4 py-3 sm:px-6 flex justify-between items-center">
+                <h3 class="text-lg leading-6 font-medium text-white" x-text="isEdit ? 'Editar Cliente' : 'Novo Cliente'"></h3>
+                <button @click="showModal = false" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <form method="POST" class="p-6">
+                <input type="hidden" name="action" :value="isEdit ? 'edit' : 'create'">
+                <input type="hidden" name="id" x-model="form.id">
+
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Tipo de Pessoa</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-slate-50 dark:hover:bg-slate-700 dark:border-slate-600">
+                            <input type="radio" name="type" value="PJ" x-model="form.type" @change="form.document = ''" class="text-brand-green focus:ring-brand-green">
+                            <span class="dark:text-white font-bold">Pessoa Jurídica (PJ)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-slate-50 dark:hover:bg-slate-700 dark:border-slate-600">
+                            <input type="radio" name="type" value="PF" x-model="form.type" @change="form.document = ''" class="text-brand-green focus:ring-brand-green">
+                            <span class="dark:text-white font-bold">Pessoa Física (PF)</span>
+                        </label>
+                    </div>
                 </div>
 
-                <form method="POST" class="p-6">
-                    <input type="hidden" name="action" :value="isEdit ? 'edit' : 'create'">
-                    <input type="hidden" name="id" x-model="form.id">
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Tipo de Pessoa</label>
-                        <div class="flex gap-4">
-                            <label class="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-slate-50 dark:hover:bg-slate-700 dark:border-slate-600">
-                                <input type="radio" name="type" value="PJ" x-model="form.type" @change="form.document = ''" class="text-brand-green focus:ring-brand-green">
-                                <span class="dark:text-white font-bold">Pessoa Jurídica (PJ)</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-slate-50 dark:hover:bg-slate-700 dark:border-slate-600">
-                                <input type="radio" name="type" value="PF" x-model="form.type" @change="form.document = ''" class="text-brand-green focus:ring-brand-green">
-                                <span class="dark:text-white font-bold">Pessoa Física (PF)</span>
-                            </label>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="form.type === 'PJ' ? 'Razão Social' : 'Nome Completo'"></label>
+                        <input type="text" name="name" x-model="form.name" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:border-brand-green focus:outline-none">
                     </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="form.type === 'PJ' ? 'CNPJ' : 'CPF'"></label>
+                        <input type="text" 
+                               name="document" 
+                               x-model="form.document"
+                               @input="maskDocument"
+                               required 
+                               class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:border-brand-green focus:outline-none placeholder-slate-500"
+                               :placeholder="form.type === 'PJ' ? '00.000.000/0000-00' : '000.000.000-00'">
+                    </div>
+                </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="mb-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <h4 class="font-bold text-brand-green text-sm mb-3 uppercase">Endereço</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="form.type === 'PJ' ? 'Razão Social' : 'Nome Completo'"></label>
-                            <input type="text" name="name" x-model="form.name" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:border-brand-green focus:outline-none">
+                            <label class="block text-xs font-bold text-slate-500 mb-1">CEP</label>
+                            <div class="relative">
+                                <input type="text" name="zip_code" x-model="form.zip_code" @input="maskZip" @blur="fetchAddress" placeholder="00000-000" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:border-brand-green focus:outline-none">
+                                <div x-show="loadingZip" class="absolute right-2 top-2 text-brand-green text-xs">...</div>
+                            </div>
                         </div>
-                        
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Rua / Logradouro</label>
+                            <input type="text" name="address" x-model="form.address" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white bg-slate-50">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="form.type === 'PJ' ? 'CNPJ' : 'CPF'"></label>
-                            <input type="text" 
-                                   name="document" 
-                                   x-model="form.document"
-                                   @input="maskDocument"
-                                   required 
-                                   class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:border-brand-green focus:outline-none placeholder-slate-500"
-                                   :placeholder="form.type === 'PJ' ? '00.000.000/0000-00' : '000.000.000-00'">
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Número</label>
+                            <input type="text" name="number" x-model="form.number" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Complemento</label>
+                            <input type="text" name="complement" x-model="form.complement" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Bairro</label>
+                            <input type="text" name="neighborhood" x-model="form.neighborhood" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white bg-slate-50">
                         </div>
                     </div>
+                    <div class="grid grid-cols-2 gap-4 mt-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Cidade</label>
+                            <input type="text" name="city" x-model="form.city" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white bg-slate-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Estado (UF)</label>
+                            <input type="text" name="state" x-model="form.state" required maxlength="2" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white bg-slate-50">
+                        </div>
+                    </div>
+                </div>
 
-                    <div class="mb-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                        <h4 class="font-bold text-brand-green text-sm mb-3 uppercase">Endereço</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">CEP</label>
-                                <div class="relative">
-                                    <input type="text" name="zip_code" x-model="form.zip_code" @input="maskZip" @blur="fetchAddress" placeholder="00000-000" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:border-brand-green focus:outline-none">
-                                    <div x-show="loadingZip" class="absolute right-2 top-2 text-brand-green text-xs">...</div>
-                                </div>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Rua / Logradouro</label>
-                                <input type="text" name="address" x-model="form.address" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white bg-slate-50">
-                            </div>
+                <div class="mb-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <h4 class="font-bold text-brand-blue text-sm mb-3 uppercase">Contatos & Web</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">E-mail Principal</label>
+                            <input type="email" name="email" x-model="form.email" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Número</label>
-                                <input type="text" name="number" x-model="form.number" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Complemento</label>
-                                <input type="text" name="complement" x-model="form.complement" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Bairro</label>
-                                <input type="text" name="neighborhood" x-model="form.neighborhood" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white bg-slate-50">
-                            </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">E-mail Cobrança (Opcional)</label>
+                            <input type="email" name="billing_email" x-model="form.billing_email" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
-                        <div class="grid grid-cols-2 gap-4 mt-3">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Cidade</label>
-                                <input type="text" name="city" x-model="form.city" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white bg-slate-50">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Estado (UF)</label>
-                                <input type="text" name="state" x-model="form.state" required maxlength="2" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white bg-slate-50">
-                            </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">WhatsApp</label>
+                            <input type="text" name="phone" x-model="form.phone" @input="maskPhone" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="(00) 00000-0000">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Site / URL</label>
+                            <input type="url" name="website" x-model="form.website" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
                     </div>
+                </div>
 
-                    <div class="mb-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                        <h4 class="font-bold text-brand-blue text-sm mb-3 uppercase">Contatos & Web</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">E-mail Principal</label>
-                                <input type="email" name="email" x-model="form.email" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">E-mail Cobrança (Opcional)</label>
-                                <input type="email" name="billing_email" x-model="form.billing_email" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">WhatsApp</label>
-                                <input type="text" name="phone" x-model="form.phone" @input="maskPhone" required class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="(00) 00000-0000">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Site / URL</label>
-                                <input type="url" name="website" x-model="form.website" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                            </div>
-                        </div>
-                    </div>
+                <div class="mb-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Observações Internas (Não visível ao cliente)</label>
+                    <textarea name="observations" x-model="form.observations" rows="3" class="w-full px-3 py-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Anote aqui preferências, restrições ou detalhes importantes..."></textarea>
+                </div>
 
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button type="button" @click="showModal = false" class="px-4 py-2 border rounded text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">Cancelar</button>
-                        <button type="submit" class="px-4 py-2 bg-brand-green text-white font-bold rounded hover:bg-green-600 transition">Salvar Cliente</button>
-                    </div>
-                </form>
-            </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" @click="showModal = false" class="px-4 py-2 border rounded text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-green text-white font-bold rounded hover:bg-green-600 transition">Salvar Cliente</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -261,7 +263,7 @@ Layout::header('Gestão de Clientes');
 document.addEventListener('alpine:init', () => {
     Alpine.data('clientManager', () => ({
         showModal: false, isEdit: false, loadingZip: false,
-        form: { id: '', type: 'PJ', name: '', document: '', email: '', billing_email: '', phone: '', website: '', zip_code: '', address: '', number: '', complement: '', neighborhood: '', city: '', state: '' },
+        form: { id: '', type: 'PJ', name: '', document: '', email: '', billing_email: '', phone: '', website: '', zip_code: '', address: '', number: '', complement: '', neighborhood: '', city: '', state: '', observations: '' },
         
         openModal() { this.isEdit = false; this.resetForm(); this.showModal = true; },
         editClient(client) {
@@ -274,23 +276,18 @@ document.addEventListener('alpine:init', () => {
             this.showModal = true;
         },
         resetForm() {
-            this.form = { id: '', type: 'PJ', name: '', document: '', email: '', billing_email: '', phone: '', website: '', zip_code: '', address: '', number: '', complement: '', neighborhood: '', city: '', state: '' };
+            this.form = { id: '', type: 'PJ', name: '', document: '', email: '', billing_email: '', phone: '', website: '', zip_code: '', address: '', number: '', complement: '', neighborhood: '', city: '', state: '', observations: '' };
         },
         
-        // MÁSCARAS MANUAIS (INFALÍVEIS)
+        // MÁSCARAS MANUAIS
         maskDocument() {
             let v = this.form.document.replace(/\D/g, '');
             if (this.form.type === 'PJ') {
                 if (v.length > 14) v = v.substring(0, 14);
-                v = v.replace(/^(\d{2})(\d)/, '$1.$2');
-                v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-                v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
-                v = v.replace(/(\d{4})(\d)/, '$1-$2');
+                v = v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
             } else {
                 if (v.length > 11) v = v.substring(0, 11);
-                v = v.replace(/(\d{3})(\d)/, '$1.$2');
-                v = v.replace(/(\d{3})(\d)/, '$1.$2');
-                v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
             }
             this.form.document = v;
         },
