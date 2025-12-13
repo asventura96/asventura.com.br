@@ -11,7 +11,7 @@
   "dependencies": {
     "autoprefixer": "^10.4.22",
     "lucide-react": "^0.555.0",
-    "next": "16.0.3",
+    "next": "^16.0.10",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "swiper": "^12.0.3"
