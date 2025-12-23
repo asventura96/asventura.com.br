@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@next/third-parties": "^16.1.1",
     "autoprefixer": "^10.4.22",
     "lucide-react": "^0.555.0",
     "next": "^16.0.10",

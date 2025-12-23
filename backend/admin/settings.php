@@ -12,9 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!isset($_POST['action']) || $_POST['action'] !== 'save') throw new Exception("Ação inválida.");
         
-        // CAMPOS QUE SERÃO SALVOS (SMTP REMOVIDO)
+        // CAMPOS QUE SERÃO SALVOS (Adicionado google_tag_manager_id)
         $fields = [
             'site_title', 'site_description', 
+            'google_tag_manager_id', 
             'contact_email', 'contact_phone', 'contact_address',
             'social_links' // JSON das redes sociais
         ];
@@ -58,8 +59,14 @@ $settings = [];
 $stmt = $pdo->query("SELECT * FROM settings");
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) $settings[$row['setting_key']] = $row['setting_value'];
 
-// Garante chaves padrão
-$keys = ['site_title', 'site_description', 'site_logo', 'site_favicon', 'contact_email', 'contact_phone', 'contact_address', 'social_links'];
+// Garante chaves padrão (Adicionado google_tag_manager_id)
+$keys = [
+    'site_title', 'site_description', 
+    'google_tag_manager_id',
+    'site_logo', 'site_favicon', 
+    'contact_email', 'contact_phone', 'contact_address', 
+    'social_links'
+];
 foreach($keys as $k) { if(!isset($settings[$k])) $settings[$k] = ''; }
 
 // Garante que social_links seja um JSON válido
@@ -114,6 +121,19 @@ Layout::header('Configurações');
                                     <input type="file" @change="handleFile($event, 'site_favicon', 'favicon')" class="absolute inset-0 opacity-0 cursor-pointer">
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="bg-blue-50 dark:bg-slate-700/50 px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                        <span class="text-blue-600 text-xl">🔌</span>
+                        <h2 class="font-bold text-brand-dark dark:text-white">Integrações</h2>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div>
+                            <p class="text-xs text-slate-400 mb-2">Cole apenas o código (Ex: GTM-XXXXXX)</p>
+                            <?php echo UI::input('Google Tag Manager ID', 'data.google_tag_manager_id', 'text'); ?>
                         </div>
                     </div>
                 </div>
